@@ -8,18 +8,19 @@ exports.loginUser = async (req, res) => {
 
     let user = await User.findOne({ email });
 
-    // If user doesn't exist: auto-register (for demo/dev)
     if (!user) {
-      user = await User.create({ email, password }); // no manual hash
+      user = new User({ email, password });
+      await user.save();
+      console.log("User created. Hashed password:", user.password);
     } else {
-      // If user exists, validate password
+      console.log("User found. Hashed password:", user.password);
       const isMatch = await bcrypt.compare(password, user.password);
+      console.log("Comparing passwords: ", password, "==", user.password, " => ", isMatch);
       if (!isMatch) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
     }
 
-    // Generate JWT
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
